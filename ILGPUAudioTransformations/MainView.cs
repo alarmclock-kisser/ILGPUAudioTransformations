@@ -22,6 +22,7 @@ namespace ILGPUAudioTransformations
 		public bool DataTransformed => GpuH.GpuMemoryH != null && AudioH.CurrentTrack?.Floats.Length == 0 && AudioH.CurrentTrack?.Pointer != 0 && GpuH.GpuMemoryH.ComplexBuffers.ContainsKey(AudioH.CurrentTrack?.Pointer ?? 0);
 
 		public string TransformMode => DataOnCuda ? comboBox_cudaTransformations.SelectedItem?.ToString() ?? "None" : "None";
+		public string KernelName => SelectedTrack != null ? comboBox_kernels.SelectedItem?.ToString()?.Replace("F: ", "").Replace("C: ", "") ?? "None" : "None";
 
 
 		// ----- ----- ----- CONSTRUCTORS ----- ----- ----- //
@@ -101,6 +102,9 @@ namespace ILGPUAudioTransformations
 
 			// Normalize button
 			button_normalize.Enabled = SelectedTrack != null && (DataOnHost || DataOnCuda);
+
+			// Run button
+			button_run.Enabled = SelectedTrack != null && (DataOnHost || DataOnCuda) && KernelName != "None";
 		}
 
 		public void ExportWav()
@@ -148,6 +152,12 @@ namespace ILGPUAudioTransformations
 		{
 			// Update logging interval
 			GpuH.LogInterval = (int) numericUpDown_loggingFreq.Value;
+		}
+
+		private void comboBox_kernels_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			// Update UI
+			ToggleUI();
 		}
 
 		private void button_normalize_Click(object sender, EventArgs e)
@@ -224,6 +234,34 @@ namespace ILGPUAudioTransformations
 					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformIFFTW(SelectedTrack.Pointer);
 					break;
 			}
+		}
+
+		private void button_run_Click(object sender, EventArgs e)
+		{
+			// Abort if no track
+			if (SelectedTrack == null || GpuH.GpuKernelH == null || GpuH.GpuMemoryH == null || GpuH.GpuKernelH == null)
+			{
+				return;
+			}
+
+			// Run KernelH function switch case
+			switch (KernelName)
+			{
+				case "None":
+					// No kernel
+					break;
+				case "Normalize":
+					// Normalize kernel
+					GpuH.GpuKernelH.Normalize(SelectedTrack.Pointer, (float) numericUpDown_param1.Value);
+					break;
+				case "TimeStretch":
+					// TimeStretch kernel
+					GpuH.GpuKernelH.TimeStretch(SelectedTrack.Pointer, (float) numericUpDown_param1.Value);
+					break;
+			}
+
+			// Update UI
+			ToggleUI();
 		}
 
 

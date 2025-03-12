@@ -53,6 +53,11 @@
 			groupBox_transform = new GroupBox();
 			comboBox_cudaTransformations = new ComboBox();
 			button_transform = new Button();
+			groupBox_kernels = new GroupBox();
+			comboBox_kernels = new ComboBox();
+			label_param1 = new Label();
+			numericUpDown_param1 = new NumericUpDown();
+			button_run = new Button();
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).BeginInit();
 			groupBox_controls.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_normalize).BeginInit();
@@ -60,6 +65,8 @@
 			groupBox_move.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).BeginInit();
 			groupBox_transform.SuspendLayout();
+			groupBox_kernels.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_param1).BeginInit();
 			SuspendLayout();
 			// 
 			// listBox_tracks
@@ -307,11 +314,66 @@
 			button_transform.UseVisualStyleBackColor = true;
 			button_transform.Click += button_transform_Click;
 			// 
+			// groupBox_kernels
+			// 
+			groupBox_kernels.Controls.Add(comboBox_kernels);
+			groupBox_kernels.Controls.Add(label_param1);
+			groupBox_kernels.Controls.Add(numericUpDown_param1);
+			groupBox_kernels.Controls.Add(button_run);
+			groupBox_kernels.Location = new Point(1472, 321);
+			groupBox_kernels.Name = "groupBox_kernels";
+			groupBox_kernels.Size = new Size(300, 120);
+			groupBox_kernels.TabIndex = 11;
+			groupBox_kernels.TabStop = false;
+			groupBox_kernels.Text = "CUDA kernels";
+			// 
+			// comboBox_kernels
+			// 
+			comboBox_kernels.FormattingEnabled = true;
+			comboBox_kernels.Items.AddRange(new object[] { "F: Normalize", "C: TimeStretch" });
+			comboBox_kernels.Location = new Point(6, 22);
+			comboBox_kernels.Name = "comboBox_kernels";
+			comboBox_kernels.Size = new Size(288, 23);
+			comboBox_kernels.TabIndex = 12;
+			comboBox_kernels.SelectedIndexChanged += comboBox_kernels_SelectedIndexChanged;
+			// 
+			// label_param1
+			// 
+			label_param1.AutoSize = true;
+			label_param1.Location = new Point(6, 73);
+			label_param1.Name = "label_param1";
+			label_param1.Size = new Size(80, 15);
+			label_param1.TabIndex = 2;
+			label_param1.Text = "Parameter #1:";
+			// 
+			// numericUpDown_param1
+			// 
+			numericUpDown_param1.DecimalPlaces = 12;
+			numericUpDown_param1.Increment = new decimal(new int[] { 1, 0, 0, 196608 });
+			numericUpDown_param1.Location = new Point(6, 91);
+			numericUpDown_param1.Maximum = new decimal(new int[] { 9999, 0, 0, 196608 });
+			numericUpDown_param1.Minimum = new decimal(new int[] { 1, 0, 0, 196608 });
+			numericUpDown_param1.Name = "numericUpDown_param1";
+			numericUpDown_param1.Size = new Size(120, 23);
+			numericUpDown_param1.TabIndex = 1;
+			numericUpDown_param1.Value = new decimal(new int[] { 1, 0, 0, 0 });
+			// 
+			// button_run
+			// 
+			button_run.Location = new Point(219, 91);
+			button_run.Name = "button_run";
+			button_run.Size = new Size(75, 23);
+			button_run.TabIndex = 0;
+			button_run.Text = "Run kernel";
+			button_run.UseVisualStyleBackColor = true;
+			button_run.Click += button_run_Click;
+			// 
 			// MainView
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(1784, 961);
+			Controls.Add(groupBox_kernels);
 			Controls.Add(groupBox_transform);
 			Controls.Add(groupBox_move);
 			Controls.Add(label_trackMeta);
@@ -337,6 +399,9 @@
 			groupBox_move.PerformLayout();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).EndInit();
 			groupBox_transform.ResumeLayout(false);
+			groupBox_kernels.ResumeLayout(false);
+			groupBox_kernels.PerformLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_param1).EndInit();
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -368,5 +433,10 @@
 		private Label label_loggingFreq;
 		private NumericUpDown numericUpDown_loggingFreq;
 		private NumericUpDown numericUpDown_normalize;
+		private GroupBox groupBox_kernels;
+		private ComboBox comboBox_kernels;
+		private Label label_param1;
+		private NumericUpDown numericUpDown_param1;
+		private Button button_run;
 	}
 }

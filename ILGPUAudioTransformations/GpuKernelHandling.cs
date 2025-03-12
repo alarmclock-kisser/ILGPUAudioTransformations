@@ -4,6 +4,7 @@ using ILGPU.Runtime;
 using ILGPU.Util;
 using ILGPU;
 using ILGPU.Runtime.Cuda;
+using System.Numerics;
 
 namespace ILGPUAudioTransformations
 {
@@ -145,5 +146,104 @@ namespace ILGPUAudioTransformations
 			}
 		}
 
+		public void TimeStretch(long firstPointer, float factor)
+		{
+			// Abort if not initialized
+			if (!IsInitialized || Acc == null || Dev == null)
+			{
+				Log("Kernel not initialized", "TimeSTretchKernel", 1);
+				return;
+			}
+
+			// Get buffers
+			if (!ComplexBuffers.TryGetValue(firstPointer, out MemoryBuffer1D<Float2, Stride1D.Dense>[]? buffers))
+			{
+				Log("No buffers found", "TimeStretchKernel", 1);
+				return;
+			}
+
+			// Log
+			Log("Timestretching buffers", "factor: " + factor, 1);
+			Log("");
+
+			try
+			{
+				// Load kernel once
+				var kernel = Acc.LoadAutoGroupedStreamKernel<Index1D, ArrayView<Float2>, float>(TimeStretchKernel);
+
+				// For every buffer
+				for (int i = 0; i < buffers.Length; i++)
+				{
+					MemoryBuffer1D<Float2, Stride1D.Dense> buffer = buffers[i];
+					if (buffer == null) continue; // Sicherstellen, dass buffer nicht null ist
+
+					// Call kernel
+					kernel((int) buffer.Length, buffer.View, factor);
+
+					// Synchronize accellerator
+					Acc.Synchronize();
+
+					// Log
+					if (i % LogInterval == 0)
+					{
+						Log("Timestretched buffer " + i + "/" + buffers.Length, "", 2, true);
+					}
+				}
+
+				// Log
+				Log($"Timestretched {buffers.Length} buffers", "", 1, true);
+			}
+			catch (Exception e)
+			{
+				Log("Error timestretching buffers", e.Message, 1);
+			}
+
+			// Update VRAM
+			GpuMemoryH.GpuH.UpdateVram();
+		}
+
+		private static void TimeStretchKernel(Index1D d, ArrayView<Float2> view, float factor)
+		{
+			// Get size & overlap 50%
+			int size = (int) view.Length;
+			int overlap = size / 2;
+
+			// Get index
+			int i = d;
+
+			// Get factor
+			float stretchFactor = factor;
+
+			// Get window
+			float window = 0.5f - 0.5f * MathF.Cos(2 * MathF.PI * i / size);
+
+			// Get phase
+			float phase = 2 * MathF.PI * i * stretchFactor / size;
+
+			// Get real & imaginary
+			float real = view[i].X;
+			float imag = view[i].Y;
+
+			// Get phase
+			float newPhase = phase + window;
+			float newReal = real + phase;
+			float newImag = imag + phase;
+
+			// Set new values
+			view[i] = new Float2(newReal, newImag);
+
+			// Set overlap
+			if (i < overlap)
+			{
+				view[i + overlap] = new Float2(newReal, newImag);
+			}
+
+			// Set overlap
+			if (i >= size - overlap)
+			{
+				view[i - overlap] = new Float2(newReal, newImag);
+			}
+
+		}
 	}
 }
