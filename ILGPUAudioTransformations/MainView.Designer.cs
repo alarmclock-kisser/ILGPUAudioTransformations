@@ -55,6 +55,8 @@
 			comboBox_cudaTransformations = new ComboBox();
 			button_transform = new Button();
 			groupBox_kernels = new GroupBox();
+			button_bpmFit = new Button();
+			numericUpDown_goalBpm = new NumericUpDown();
 			comboBox_kernels = new ComboBox();
 			label_param1 = new Label();
 			numericUpDown_param1 = new NumericUpDown();
@@ -68,6 +70,7 @@
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).BeginInit();
 			groupBox_transform.SuspendLayout();
 			groupBox_kernels.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_goalBpm).BeginInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_param1).BeginInit();
 			SuspendLayout();
 			// 
@@ -330,6 +333,8 @@
 			// 
 			// groupBox_kernels
 			// 
+			groupBox_kernels.Controls.Add(button_bpmFit);
+			groupBox_kernels.Controls.Add(numericUpDown_goalBpm);
 			groupBox_kernels.Controls.Add(comboBox_kernels);
 			groupBox_kernels.Controls.Add(label_param1);
 			groupBox_kernels.Controls.Add(numericUpDown_param1);
@@ -340,6 +345,28 @@
 			groupBox_kernels.TabIndex = 11;
 			groupBox_kernels.TabStop = false;
 			groupBox_kernels.Text = "CUDA kernels";
+			// 
+			// button_bpmFit
+			// 
+			button_bpmFit.Location = new Point(219, 51);
+			button_bpmFit.Name = "button_bpmFit";
+			button_bpmFit.Size = new Size(75, 23);
+			button_bpmFit.TabIndex = 13;
+			button_bpmFit.Text = "BPM fit";
+			button_bpmFit.UseVisualStyleBackColor = true;
+			button_bpmFit.Click += button_bpmFit_Click;
+			// 
+			// numericUpDown_goalBpm
+			// 
+			numericUpDown_goalBpm.DecimalPlaces = 2;
+			numericUpDown_goalBpm.Increment = new decimal(new int[] { 1, 0, 0, 65536 });
+			numericUpDown_goalBpm.Location = new Point(140, 51);
+			numericUpDown_goalBpm.Maximum = new decimal(new int[] { 400, 0, 0, 0 });
+			numericUpDown_goalBpm.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
+			numericUpDown_goalBpm.Name = "numericUpDown_goalBpm";
+			numericUpDown_goalBpm.Size = new Size(73, 23);
+			numericUpDown_goalBpm.TabIndex = 13;
+			numericUpDown_goalBpm.Value = new decimal(new int[] { 180, 0, 0, 0 });
 			// 
 			// comboBox_kernels
 			// 
@@ -366,7 +393,6 @@
 			numericUpDown_param1.Increment = new decimal(new int[] { 1, 0, 0, 196608 });
 			numericUpDown_param1.Location = new Point(6, 91);
 			numericUpDown_param1.Maximum = new decimal(new int[] { 9999, 0, 0, 196608 });
-			numericUpDown_param1.Minimum = new decimal(new int[] { 1, 0, 0, 196608 });
 			numericUpDown_param1.Name = "numericUpDown_param1";
 			numericUpDown_param1.Size = new Size(120, 23);
 			numericUpDown_param1.TabIndex = 1;
@@ -425,6 +451,7 @@
 			groupBox_transform.ResumeLayout(false);
 			groupBox_kernels.ResumeLayout(false);
 			groupBox_kernels.PerformLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_goalBpm).EndInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_param1).EndInit();
 			ResumeLayout(false);
 			PerformLayout();
@@ -464,5 +491,7 @@
 		private Button button_run;
 		private Button button_levelVolume;
 		private Label label_bpm;
+		private Button button_bpmFit;
+		private NumericUpDown numericUpDown_goalBpm;
 	}
 }

@@ -288,5 +288,23 @@ namespace ILGPUAudioTransformations
 			// Update UI
 			ToggleUI();
 		}
+
+		private void button_bpmFit_Click(object sender, EventArgs e)
+		{
+			// Abort if no track selected
+			if (SelectedTrack == null || numericUpDown_goalBpm.Value == 0 || CurrentBpm < 10 || CurrentBpm > 240)
+			{
+				return;
+			}
+
+			// Get factor
+			float factor = CurrentBpm / (float) numericUpDown_goalBpm.Value;
+
+			// Set factor to param1
+			numericUpDown_param1.Value = (decimal) factor;
+
+			// Toggle UI
+			ToggleUI();
+		}
 	}
 }
