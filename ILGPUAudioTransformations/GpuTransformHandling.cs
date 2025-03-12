@@ -232,14 +232,14 @@ namespace ILGPUAudioTransformations
 			}
 		}
 
-		public long PerformSTFT(long pointer)
+		public long PerformFFTW(long pointer)
 		{
-			throw new NotImplementedException();
+			return 0;
 		}
 
-		public long PerformISTFT(long pointer)
+		public long PerformIFFTW(long pointer)
 		{
-			throw new NotImplementedException();
+			return 0;
 		}
 	}
 }

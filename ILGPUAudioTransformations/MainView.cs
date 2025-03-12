@@ -98,6 +98,9 @@ namespace ILGPUAudioTransformations
 			// Transform button
 			button_transform.Enabled = SelectedTrack != null && DataOnCuda;
 			button_transform.Text = DataTransformed ? "Re-Transform" : "Transform";
+
+			// Normalize button
+			button_normalize.Enabled = SelectedTrack != null && (DataOnHost || DataOnCuda);
 		}
 
 		public void ExportWav()
@@ -149,8 +152,16 @@ namespace ILGPUAudioTransformations
 
 		private void button_normalize_Click(object sender, EventArgs e)
 		{
-			// Normalize selected track
-			SelectedTrack?.Normalize();
+			float factor = (float) numericUpDown_normalize.Value;
+
+			if (DataOnHost)
+			{
+				SelectedTrack?.Normalize(factor);
+			}
+			else if (DataOnCuda)
+			{
+				GpuH.GpuKernelH?.Normalize(SelectedTrack?.Pointer ?? 0, factor);
+			}
 
 			// Update UI
 			ToggleUI();
@@ -204,13 +215,13 @@ namespace ILGPUAudioTransformations
 					// IFFT transformation
 					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformIFFT(SelectedTrack.Pointer);
 					break;
-				case "STFT":
+				case "FFTW":
 					// TFT transformation
-					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformSTFT(SelectedTrack.Pointer);
+					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformFFTW(SelectedTrack.Pointer);
 					break;
-				case "ISTFT":
+				case "IFFTW":
 					// ISTFT transformation
-					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformISTFT(SelectedTrack.Pointer);
+					SelectedTrack.Pointer = GpuH.GpuTransformH.PerformIFFTW(SelectedTrack.Pointer);
 					break;
 			}
 		}

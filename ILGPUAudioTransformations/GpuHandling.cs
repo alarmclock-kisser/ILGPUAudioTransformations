@@ -31,6 +31,7 @@ namespace ILGPUAudioTransformations
 		// ----- ----- ----- OBJECTS ----- ----- ----- //
 		public GpuMemoryHandling? GpuMemoryH = null;
 		public GpuTransformHandling? GpuTransformH = null;
+		public GpuKernelHandling? GpuKernelH = null;
 
 
 		// ----- ----- ----- LAMBDA FUNCTIONS ----- ----- ----- //
@@ -144,6 +145,7 @@ namespace ILGPUAudioTransformations
 				// Create objects
 				GpuMemoryH = new GpuMemoryHandling(this, LogBox);
 				GpuTransformH = new GpuTransformHandling(GpuMemoryH, LogBox);
+				GpuKernelH = new GpuKernelHandling(GpuMemoryH, LogBox);
 
 				// Log
 				Log("Device initialized", Dev.PCIDeviceId + ":" + Dev.Name, 1);
@@ -165,6 +167,8 @@ namespace ILGPUAudioTransformations
 			GpuMemoryH = null;
 			GpuTransformH?.Dispose();
 			GpuTransformH = null;
+			GpuKernelH?.Dispose();
+			GpuKernelH = null;
 
 			// Dispose context etc.
 			Dev = null;

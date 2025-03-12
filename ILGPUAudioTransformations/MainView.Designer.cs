@@ -32,6 +32,7 @@
 			listBox_log = new ListBox();
 			pictureBox_waveform = new PictureBox();
 			groupBox_controls = new GroupBox();
+			numericUpDown_normalize = new NumericUpDown();
 			label_loggingFreq = new Label();
 			numericUpDown_loggingFreq = new NumericUpDown();
 			button_colorBack = new Button();
@@ -54,6 +55,7 @@
 			button_transform = new Button();
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).BeginInit();
 			groupBox_controls.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_normalize).BeginInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_loggingFreq).BeginInit();
 			groupBox_move.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).BeginInit();
@@ -88,6 +90,7 @@
 			// 
 			// groupBox_controls
 			// 
+			groupBox_controls.Controls.Add(numericUpDown_normalize);
 			groupBox_controls.Controls.Add(label_loggingFreq);
 			groupBox_controls.Controls.Add(numericUpDown_loggingFreq);
 			groupBox_controls.Controls.Add(button_colorBack);
@@ -102,6 +105,18 @@
 			groupBox_controls.TabIndex = 3;
 			groupBox_controls.TabStop = false;
 			groupBox_controls.Text = "Controls";
+			// 
+			// numericUpDown_normalize
+			// 
+			numericUpDown_normalize.DecimalPlaces = 3;
+			numericUpDown_normalize.Increment = new decimal(new int[] { 1, 0, 0, 131072 });
+			numericUpDown_normalize.Location = new Point(87, 22);
+			numericUpDown_normalize.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
+			numericUpDown_normalize.Minimum = new decimal(new int[] { 1, 0, 0, 131072 });
+			numericUpDown_normalize.Name = "numericUpDown_normalize";
+			numericUpDown_normalize.Size = new Size(67, 23);
+			numericUpDown_normalize.TabIndex = 11;
+			numericUpDown_normalize.Value = new decimal(new int[] { 1, 0, 0, 0 });
 			// 
 			// label_loggingFreq
 			// 
@@ -276,7 +291,7 @@
 			// comboBox_cudaTransformations
 			// 
 			comboBox_cudaTransformations.FormattingEnabled = true;
-			comboBox_cudaTransformations.Items.AddRange(new object[] { "FFT", "IFFT", "FFTW", "STFT", "ISTFT" });
+			comboBox_cudaTransformations.Items.AddRange(new object[] { "FFT", "IFFT", "FFTW", "IFFTW" });
 			comboBox_cudaTransformations.Location = new Point(87, 45);
 			comboBox_cudaTransformations.Name = "comboBox_cudaTransformations";
 			comboBox_cudaTransformations.Size = new Size(207, 23);
@@ -316,6 +331,7 @@
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).EndInit();
 			groupBox_controls.ResumeLayout(false);
 			groupBox_controls.PerformLayout();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_normalize).EndInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_loggingFreq).EndInit();
 			groupBox_move.ResumeLayout(false);
 			groupBox_move.PerformLayout();
@@ -351,5 +367,6 @@
 		private Button button_transform;
 		private Label label_loggingFreq;
 		private NumericUpDown numericUpDown_loggingFreq;
+		private NumericUpDown numericUpDown_normalize;
 	}
 }
