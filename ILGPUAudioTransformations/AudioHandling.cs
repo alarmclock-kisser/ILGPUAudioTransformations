@@ -222,6 +222,41 @@ namespace ILGPUAudioTransformations
 
 		}
 
+		public static float UpdateId3Tag(string filePath, Label? bpmLabel = null)
+		{
+			// Verify file
+			if (!File.Exists(filePath) || (Path.GetExtension(filePath).ToLower() != ".mp3" &&
+										   Path.GetExtension(filePath).ToLower() != ".flac" &&
+										   Path.GetExtension(filePath).ToLower() != ".wav"))
+			{
+				return 0.0f;
+			}
+
+			// Get TagLib file
+			var file = TagLib.File.Create(filePath);
+
+			// Versuch 1: Standard BPM-Tag (Ganzzahl)
+			float bpm = file.Tag.BeatsPerMinute;
+
+			// Versuch 2: Benutzerdefiniertes ID3-Tag (MixMeister speichert BPM oft als String)
+			if (bpm == 0 && file.Tag is TagLib.Id3v2.Tag id3v2Tag)
+			{
+				var bpmFrame = TagLib.Id3v2.TextInformationFrame.Get(id3v2Tag, "TBPM", false);
+				if (bpmFrame != null && float.TryParse(bpmFrame.Text[0], out float parsedBpm))
+				{
+					bpm = parsedBpm;
+				}
+			}
+
+			// Update Label mit 2 Nachkommastellen
+			if (bpmLabel != null)
+			{
+				bpmLabel.Text = $"BPM: {(bpm / 100):F2}";
+			}
+
+			// Return BPM
+			return bpm / 100;
+		}
 
 
 

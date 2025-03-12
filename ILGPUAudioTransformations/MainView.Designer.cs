@@ -32,6 +32,7 @@
 			listBox_log = new ListBox();
 			pictureBox_waveform = new PictureBox();
 			groupBox_controls = new GroupBox();
+			button_levelVolume = new Button();
 			numericUpDown_normalize = new NumericUpDown();
 			label_loggingFreq = new Label();
 			numericUpDown_loggingFreq = new NumericUpDown();
@@ -58,6 +59,7 @@
 			label_param1 = new Label();
 			numericUpDown_param1 = new NumericUpDown();
 			button_run = new Button();
+			label_bpm = new Label();
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).BeginInit();
 			groupBox_controls.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_normalize).BeginInit();
@@ -97,6 +99,7 @@
 			// 
 			// groupBox_controls
 			// 
+			groupBox_controls.Controls.Add(button_levelVolume);
 			groupBox_controls.Controls.Add(numericUpDown_normalize);
 			groupBox_controls.Controls.Add(label_loggingFreq);
 			groupBox_controls.Controls.Add(numericUpDown_loggingFreq);
@@ -112,6 +115,16 @@
 			groupBox_controls.TabIndex = 3;
 			groupBox_controls.TabStop = false;
 			groupBox_controls.Text = "Controls";
+			// 
+			// button_levelVolume
+			// 
+			button_levelVolume.Location = new Point(6, 51);
+			button_levelVolume.Name = "button_levelVolume";
+			button_levelVolume.Size = new Size(75, 23);
+			button_levelVolume.TabIndex = 12;
+			button_levelVolume.Text = "Level vol.";
+			button_levelVolume.UseVisualStyleBackColor = true;
+			button_levelVolume.Click += button_levelVolume_Click;
 			// 
 			// numericUpDown_normalize
 			// 
@@ -303,6 +316,7 @@
 			comboBox_cudaTransformations.Name = "comboBox_cudaTransformations";
 			comboBox_cudaTransformations.Size = new Size(207, 23);
 			comboBox_cudaTransformations.TabIndex = 11;
+			comboBox_cudaTransformations.SelectedIndexChanged += comboBox_cudaTransformations_SelectedIndexChanged;
 			// 
 			// button_transform
 			// 
@@ -368,11 +382,21 @@
 			button_run.UseVisualStyleBackColor = true;
 			button_run.Click += button_run_Click;
 			// 
+			// label_bpm
+			// 
+			label_bpm.AutoSize = true;
+			label_bpm.Location = new Point(1686, 732);
+			label_bpm.Name = "label_bpm";
+			label_bpm.Size = new Size(43, 15);
+			label_bpm.TabIndex = 12;
+			label_bpm.Text = "BPM: -";
+			// 
 			// MainView
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(1784, 961);
+			Controls.Add(label_bpm);
 			Controls.Add(groupBox_kernels);
 			Controls.Add(groupBox_transform);
 			Controls.Add(groupBox_move);
@@ -438,5 +462,7 @@
 		private Label label_param1;
 		private NumericUpDown numericUpDown_param1;
 		private Button button_run;
+		private Button button_levelVolume;
+		private Label label_bpm;
 	}
 }

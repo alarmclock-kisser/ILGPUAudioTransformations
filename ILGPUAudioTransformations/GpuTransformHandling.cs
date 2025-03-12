@@ -85,7 +85,7 @@ namespace ILGPUAudioTransformations
 			if (!FloatBuffers.TryGetValue(pointer, out MemoryBuffer1D<float, Stride1D.Dense>[]? buffers))
 			{
 				Log("Cannot perform FFT: Pointer not found", "PerformFFT", 1);
-				return 0;
+				return pointer;
 			}
 
 			// Create complex buffers array
@@ -165,7 +165,7 @@ namespace ILGPUAudioTransformations
 			if (!ComplexBuffers.TryGetValue(pointer, out MemoryBuffer1D<Float2, Stride1D.Dense>[]? buffers))
 			{
 				Log("Cannot perform FFT: Pointer not found", "PerformIFFT", 1);
-				return 0;
+				return pointer;
 			}
 
 			// Create float buffers array

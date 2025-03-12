@@ -12,6 +12,8 @@ namespace ILGPUAudioTransformations
 
 		private int _oldChunkSize = 65536;
 
+		public float CurrentBpm = 0;
+
 
 
 		// ----- ----- ----- LAMBDA FUNCTIONS ----- ----- ----- //
@@ -89,6 +91,9 @@ namespace ILGPUAudioTransformations
 			// Update PictureBox
 			SelectedTrack?.DrawWaveformSmooth(pictureBox_waveform, 0, 1024, button_colorGraph.BackColor, button_colorBack.BackColor);
 
+			// BPM tag
+			CurrentBpm = AudioHandling.UpdateId3Tag(SelectedTrack?.Filepath ?? "", label_bpm);
+
 			// Playback button
 			button_playback.Enabled = SelectedTrack != null;
 
@@ -104,7 +109,7 @@ namespace ILGPUAudioTransformations
 			button_normalize.Enabled = SelectedTrack != null && (DataOnHost || DataOnCuda);
 
 			// Run button
-			button_run.Enabled = SelectedTrack != null && (DataOnHost || DataOnCuda) && KernelName != "None";
+			button_run.Enabled = SelectedTrack != null && DataOnCuda && KernelName != "None";
 		}
 
 		public void ExportWav()
@@ -157,6 +162,12 @@ namespace ILGPUAudioTransformations
 		private void comboBox_kernels_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			// Update UI
+			ToggleUI();
+		}
+
+		private void comboBox_cudaTransformations_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			// Toggle UI
 			ToggleUI();
 		}
 
@@ -264,6 +275,18 @@ namespace ILGPUAudioTransformations
 			ToggleUI();
 		}
 
+		private void button_levelVolume_Click(object sender, EventArgs e)
+		{
+			// Abort if no track selected
+			if (SelectedTrack == null)
+			{
+				return;
+			}
 
+			SelectedTrack.NormalizeVolume((float) numericUpDown_normalize.Value);
+
+			// Update UI
+			ToggleUI();
+		}
 	}
 }

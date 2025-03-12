@@ -169,7 +169,7 @@ namespace ILGPUAudioTransformations
 			try
 			{
 				// Load kernel once
-				var kernel = Acc.LoadAutoGroupedStreamKernel<Index1D, ArrayView<Float2>, float>(TimeStretchKernel);
+				var kernel = Acc.LoadAutoGroupedStreamKernel<Index1D, ArrayView<Float2>, float>(TimeStretchKernel2);
 
 				// For every buffer
 				for (int i = 0; i < buffers.Length; i++)
@@ -245,5 +245,47 @@ namespace ILGPUAudioTransformations
 			}
 
 		}
+
+		private static void TimeStretchKernel2(Index1D d, ArrayView<Float2> view, float factor)
+		{
+			int size = (int) view.Length;
+			int overlap = size / 2;
+			int i = d;
+
+			// Hann-Window für sanftes Overlapping
+			float window = 0.5f - 0.5f * MathF.Cos(2 * MathF.PI * i / (size - 1));
+
+			// Frequenzbereich normalisieren und Phasenkorrektur berechnen
+			float phaseOffset = 2 * MathF.PI * i * (1.0f - factor) / size;
+
+			// Lese Originalwerte
+			Float2 value = view[i];
+
+			// Phasenverschiebung anwenden (Rotation in der komplexen Ebene)
+			float cosPhase = MathF.Cos(phaseOffset);
+			float sinPhase = MathF.Sin(phaseOffset);
+
+			float newReal = value.X * cosPhase - value.Y * sinPhase;
+			float newImag = value.X * sinPhase + value.Y * cosPhase;
+
+			// Windowing anwenden
+			newReal *= window;
+			newImag *= window;
+
+			// Schreiben
+			view[i] = new Float2(newReal, newImag);
+
+			// Overlapping korrekt berechnen, um Clipping zu vermeiden
+			if (i < overlap)
+			{
+				int overlapIndex = i + overlap;
+				float overlapWeight = 0.5f + 0.5f * MathF.Cos(MathF.PI * i / overlap); // Sanfter Übergang
+				view[overlapIndex] = new Float2(
+					view[overlapIndex].X * (1 - overlapWeight) + newReal * overlapWeight,
+					view[overlapIndex].Y * (1 - overlapWeight) + newImag * overlapWeight
+				);
+			}
+		}
+
 	}
 }
