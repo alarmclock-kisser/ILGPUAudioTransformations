@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic.Devices;
+using Microsoft.VisualBasic.Logging;
 using NAudio.Wave;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
@@ -16,7 +17,7 @@ namespace ILGPUAudioTransformations
 
 		public List<AudioObject> Tracks = [];
 
-		public int FPS = 100;
+		public int FPS = 45;
 		public int SamplesPerPixel => CurrentTrack?.Position == 0 ? CurrentTrack.GetFitResolution(WaveformPbox.Width) : _samplesPerPixel;
 
 		private int _samplesPerPixel = 128;
@@ -90,6 +91,7 @@ namespace ILGPUAudioTransformations
 				Scrollbar.Value = 0;
 			};
 			Scrollbar.Scroll += async (sender, e) => await DrawWaveformSmoothAsync();
+			TracksList.Click += (sender, e) => RemoveTrack();
 
 			this.PlayButton.Click += (sender, e) => CurrentTrack?.PlayStop(this.PlayButton);
 			this.WaveformPbox.DoubleClick += (sender, e) => ImportTracks();
@@ -142,36 +144,74 @@ namespace ILGPUAudioTransformations
 				offset = -1;
 			}
 
+			Bitmap? newBitmap = null; // Bitmap nullable machen
+
 			try
 			{
-				Bitmap bmp = await Task.Run(() =>
+				newBitmap = await Task.Run(() =>
 					CurrentTrack.DrawWaveformSmooth(WaveformPbox, offset, SamplesPerPixel, ColorGraphButton.BackColor, ColorBackgroundButton.BackColor)
 				);
-				TimeText.Text = $"{CurrentTrack.Position / CurrentTrack.Samplerate * CurrentTrack.Channels / 20.0:0.00} s";
+				TimeText.Text = $"{CurrentTrack?.Position ?? 0 / CurrentTrack?.Samplerate ?? 1 * CurrentTrack?.Channels ?? 2 / 20.0:0.00} s";
 
 
 				if (WaveformPbox.InvokeRequired)
 				{
 					WaveformPbox.Invoke(new Action(() =>
 					{
-						WaveformPbox.Image?.Dispose();
-						WaveformPbox.Image = bmp;
+						// **Vergleiche mit der aktuellen Bitmap (falls vorhanden)**
+						if (WaveformPbox.Image == null || !WaveformBitmapsAreEqual(WaveformPbox.Image as Bitmap, newBitmap))
+						{
+							WaveformPbox.Image?.Dispose(); // Dispose vorherige Bitmap
+							WaveformPbox.Image = newBitmap; // Weise *neue* Bitmap nur zu, wenn sie sich unterscheidet
+						}
+						else
+						{
+							newBitmap?.Dispose(); // Dispose die *neue* Bitmap, da sie nicht zugewiesen wird
+						}
 					}));
 				}
 				else
 				{
-					WaveformPbox.Image?.Dispose();
-					WaveformPbox.Image = bmp;
+					// **Vergleiche mit der aktuellen Bitmap (falls vorhanden)**
+					if (WaveformPbox.Image == null || !WaveformBitmapsAreEqual(WaveformPbox.Image as Bitmap, newBitmap))
+					{
+						WaveformPbox.Image?.Dispose(); // Dispose vorherige Bitmap
+						WaveformPbox.Image = newBitmap; // Weise *neue* Bitmap nur zu, wenn sie sich unterscheidet
+					}
+					else
+					{
+						newBitmap?.Dispose(); // Dispose die *neue* Bitmap, da sie nicht zugewiesen wird
+					}
 				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Waveform-Fehler: {ex.Message}");
+				newBitmap?.Dispose(); // Dispose Bitmap auch im Fehlerfall
 			}
 			finally
 			{
 				_isDrawing = false;
 			}
+		}
+
+		// Hilfsmethode zum Bitmap-Vergleich (Pixel für Pixel)
+		private bool WaveformBitmapsAreEqual(Bitmap? bmp1, Bitmap? bmp2)
+		{
+			if (bmp1 == null || bmp2 == null) return false;
+			if (bmp1.Width != bmp2.Width || bmp1.Height != bmp2.Height) return false;
+
+			for (int x = 0; x < bmp1.Width; x++)
+			{
+				for (int y = 0; y < bmp1.Height; y++)
+				{
+					if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+					{
+						return false; // Pixel unterscheiden sich
+					}
+				}
+			}
+			return true; // Bitmaps sind identisch
 		}
 
 
@@ -220,6 +260,22 @@ namespace ILGPUAudioTransformations
 			// Draw waveform
 			this.WaveformPbox.Invalidate();
 
+		}
+
+		public void RemoveTrack()
+		{
+			// Abort if not CTRL down
+			if ((Control.ModifierKeys & Keys.Control) != Keys.Control)
+			{
+				return;
+			}
+
+			if (TracksList.SelectedIndex >= 0 && TracksList.SelectedIndex < Tracks.Count)
+			{
+				Tracks.RemoveAt(TracksList.SelectedIndex);
+				InitTracksBinding();
+				WaveformPbox.Refresh();
+			}
 		}
 
 		public static float UpdateId3Tag(string filePath, Label? bpmLabel = null)
@@ -294,6 +350,7 @@ namespace ILGPUAudioTransformations
 		public int Overlap = 0;
 
 
+		private readonly object _waveformLock = new object(); // Lock object for thread safety
 
 
 		// ----- ----- ----- OBJECTS ----- ----- ----- //
@@ -318,6 +375,7 @@ namespace ILGPUAudioTransformations
 
 
 		// ----- ----- ----- METHODS ----- ----- ----- //
+		// ----- IO ----- \\
 		public void LoadAudio()
 		{
 			// Get audiofilereader
@@ -443,7 +501,9 @@ namespace ILGPUAudioTransformations
 			}
 		}
 
-		public Bitmap DrawWaveformSmooth(PictureBox wavebox, long offset = -1, int samplesPerPixel = 1, Color? graph = null, Color? background = null)
+
+		// ----- View ----- \\
+		public Bitmap DrawWaveformSmoothOld(PictureBox wavebox, long offset = -1, int samplesPerPixel = 1, Color? graph = null, Color? background = null)
 		{
 			// **Offset berechnen**
 			if (offset == -1)
@@ -497,11 +557,105 @@ namespace ILGPUAudioTransformations
 			float yScale = wavebox.Height / 2f;
 
 			// **Wellenform zeichnen**
-			for (int x = 0; x < wavebox.Width; x++)
+			lock (_waveformLock) // **Lock around Floats access**
+			{
+				for (int x = 0; x < wavebox.Width; x++)
+				{
+					long sampleIndex = offset + (long) x * samplesPerPixel;
+
+					if (sampleIndex >= Floats.Length) break;
+
+					float maxValue = float.MinValue;
+					float minValue = float.MaxValue;
+
+					for (int i = 0; i < samplesPerPixel; i++)
+					{
+						if (sampleIndex + i < Floats.Length)
+						{
+							if (Floats.Length == 0)
+							{
+								break;
+							}
+							try
+							{
+								maxValue = Math.Max(maxValue, Floats[sampleIndex + i]);
+								minValue = Math.Min(minValue, Floats[Math.Min(sampleIndex + i, Floats.Length - 1)]);
+							}
+							catch
+							{
+								Console.WriteLine("Error drawing waveform.");
+							}
+						}
+					}
+
+					float yMax = centerY - maxValue * yScale;
+					float yMin = centerY - minValue * yScale;
+
+					// **Begrenzungen checken**
+					yMax = Math.Max(0, Math.Min(yMax, wavebox.Height));
+					yMin = Math.Max(0, Math.Min(yMin, wavebox.Height));
+
+					// **Linie oder Punkt zeichnen**
+					if (Math.Abs(yMax - yMin) > 0.01f)
+					{
+						gfx.DrawLine(pen, x, yMax, x, yMin);
+					}
+					else if (samplesPerPixel == 1)
+					{
+						gfx.DrawLine(pen, x, centerY, x, centerY - Floats[sampleIndex] * yScale);
+					}
+				}
+			}
+
+
+			return bmp;
+		}
+
+		public Bitmap DrawWaveformSmooth(PictureBox wavebox, long offset = -1, int samplesPerPixel = 1, Color? graph = null, Color? background = null)
+		{
+			// **Offset berechnen**
+			if (offset == -1)
+			{
+				if (Player?.PlaybackState == PlaybackState.Playing)
+				{
+					// Get offset in samples (divide by channels)
+					offset = Player.GetPosition() / (Bitdepth / 8);
+				}
+				else
+				{
+					offset = 0;
+				}
+			}
+
+			// **Check: Gültige Werte**
+			if (Floats.Length == 0 || wavebox.Width <= 0 || wavebox.Height <= 0)
+			{
+				return new Bitmap(1, 1);
+			}
+
+			// **Farben festlegen**
+			Color waveformColor = graph ?? Color.FromName("HotTrack");
+			Color backgroundColor = background ?? (waveformColor.GetBrightness() > 0.5f ? Color.White : Color.Black);
+
+			// **Bitmap & Graphics**
+			Bitmap bmp = new(wavebox.Width, wavebox.Height);
+			using Graphics gfx = Graphics.FromImage(bmp);
+			using Pen pen = new(waveformColor);
+			gfx.SmoothingMode = SmoothingMode.AntiAlias;
+			gfx.Clear(backgroundColor);
+
+			// **Achsenwerte**
+			float centerY = wavebox.Height / 2f;
+			float yScale = wavebox.Height / 2f;
+
+			float[] yMaxValues = new float[wavebox.Width]; // Arrays to store calculated yMax and yMin values
+			float[] yMinValues = new float[wavebox.Width];
+
+			// **Parallele Berechnung der Wellenform-Daten**
+			Parallel.For(0, wavebox.Width, x =>
 			{
 				long sampleIndex = offset + (long) x * samplesPerPixel;
-
-				if (sampleIndex >= Floats.Length) break;
+				if (sampleIndex >= Floats.Length) return; // Exit parallel loop early if out of bounds
 
 				float maxValue = float.MinValue;
 				float minValue = float.MaxValue;
@@ -510,13 +664,34 @@ namespace ILGPUAudioTransformations
 				{
 					if (sampleIndex + i < Floats.Length)
 					{
-						maxValue = Math.Max(maxValue, Floats[sampleIndex + i]);
-						minValue = Math.Min(minValue, Floats[sampleIndex + i]);
+						if (Floats.Length == 0)
+						{
+							break;
+						}
+						try
+						{
+							lock (_waveformLock) // Lock only for Floats access
+							{
+								maxValue = Math.Max(maxValue, Floats[sampleIndex + i]);
+								minValue = Math.Min(minValue, Floats[Math.Min(sampleIndex + i, Floats.Length - 1)]);
+							}
+						}
+						catch
+						{
+							Console.WriteLine("Error calculating waveform data.");
+						}
 					}
 				}
+				yMaxValues[x] = centerY - maxValue * yScale;
+				yMinValues[x] = centerY - minValue * yScale;
+			});
 
-				float yMax = centerY - maxValue * yScale;
-				float yMin = centerY - minValue * yScale;
+
+			// **Sequentielles Zeichnen der Wellenform basierend auf den paralle berechneten Daten**
+			for (int x = 0; x < wavebox.Width; x++)
+			{
+				float yMax = yMaxValues[x];
+				float yMin = yMinValues[x];
 
 				// **Begrenzungen checken**
 				yMax = Math.Max(0, Math.Min(yMax, wavebox.Height));
@@ -529,7 +704,14 @@ namespace ILGPUAudioTransformations
 				}
 				else if (samplesPerPixel == 1)
 				{
-					gfx.DrawLine(pen, x, centerY, x, centerY - Floats[sampleIndex] * yScale);
+					lock (_waveformLock) // Lock again for Floats access for single sample drawing if needed
+					{
+						long sampleIndex = offset + (long) x * samplesPerPixel; // Recalculate sampleIndex if needed for single sample drawing
+						if (sampleIndex < Floats.Length && Floats.Length > 0) // Add bounds check
+						{
+							gfx.DrawLine(pen, x, centerY, x, centerY - Floats[sampleIndex] * yScale);
+						}
+					}
 				}
 			}
 
@@ -542,6 +724,9 @@ namespace ILGPUAudioTransformations
 			int samplesPerPixel = (int) Math.Ceiling((double) Floats.Length / width) / 4;
 			return samplesPerPixel;
 		}
+
+
+		// ----- Chunks ----- \\
 
 		public List<float[]> MakeChunks(int chunkSize, int overlap)
 		{
@@ -572,9 +757,14 @@ namespace ILGPUAudioTransformations
 			return chunks;
 		}
 
-
 		public void AggregateChunks(List<float[]> chunks)
 		{
+			if (chunks == null || chunks.Count == 0)
+			{
+				Floats = [];
+				return;
+			}
+
 			// Berechnung der finalen Länge
 			int stepSize = chunks[0].Length - Overlap;
 			int totalLength = stepSize * (chunks.Count - 1) + chunks[^1].Length;
@@ -596,6 +786,8 @@ namespace ILGPUAudioTransformations
 		}
 
 
+
+		// ----- Playback ----- \\
 		public void PlayStop(Button? playbackButton = null)
 		{
 			if (Player.PlaybackState == PlaybackState.Playing)
@@ -649,6 +841,9 @@ namespace ILGPUAudioTransformations
 			}
 		}
 
+
+
+		// ----- Simple Transformations ----- \\
 		public void Normalize(float maxAmplitude = 1.0f)
 		{
 			// Get length

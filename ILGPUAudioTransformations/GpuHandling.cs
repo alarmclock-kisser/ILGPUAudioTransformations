@@ -20,12 +20,17 @@ namespace ILGPUAudioTransformations
 		private ProgressBar VramPbar;
 
 		public int DeviceId = 0;
-		public Context Ctx = Context.CreateDefault();
+		public Context Ctx = Context.Create(builder =>
+			builder.EnableAlgorithms()
+		   .Cuda()
+		   .Optimize(OptimizationLevel.O2)
+		);
+
 		public CudaAccelerator? Acc = null;
 		public CudaDevice? Dev = null;
 
 
-		public int LogInterval = 50;
+		public int LogInterval = 100;
 
 
 		// ----- ----- ----- OBJECTS ----- ----- ----- //
@@ -177,7 +182,11 @@ namespace ILGPUAudioTransformations
 			Acc = null;
 
 			Ctx.Dispose();
-			Ctx = Context.CreateDefault();
+			Ctx = Context.Create(builder =>
+				builder.EnableAlgorithms()
+				.Cuda()
+				.Optimize(OptimizationLevel.O2)
+			);
 
 			if (!silent)
 			{
